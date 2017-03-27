@@ -1,0 +1,208 @@
+\documentclass{tufte-handout}
+
+\title{Deep learning - Practical Methodology - Notes}
+
+\author[Cosmin G. Alexandru]{Cosmin G. Alexandru}
+
+%\date{28 March 2010} % without \date command, current date is supplied
+
+%\geometry{showframe} % display margins for debugging page layout
+
+\usepackage{graphicx} % allow embedded images
+  \setkeys{Gin}{width=\linewidth,totalheight=\textheight,keepaspectratio}
+  \graphicspath{{graphics/}} % set of paths to search for images
+\usepackage{amsmath}  % extended mathematics
+\usepackage{booktabs} % book-quality tables
+\usepackage{units}    % non-stacked fractions and better unit spacing
+\usepackage{multicol} % multiple column layout facilities
+\usepackage{lipsum}   % filler text
+\usepackage{fancyvrb} % extended verbatim environments
+  \fvset{fontsize=\normalsize}% default font size for fancy-verbatim environments
+
+% Standardize command font styles and environments
+\newcommand{\doccmd}[1]{\texttt{\textbackslash#1}}% command name -- adds backslash automatically
+\newcommand{\docopt}[1]{\ensuremath{\langle}\textrm{\textit{#1}}\ensuremath{\rangle}}% optional command argument
+\newcommand{\docarg}[1]{\textrm{\textit{#1}}}% (required) command argument
+\newcommand{\docenv}[1]{\textsf{#1}}% environment name
+\newcommand{\docpkg}[1]{\texttt{#1}}% package name
+\newcommand{\doccls}[1]{\texttt{#1}}% document class name
+\newcommand{\docclsopt}[1]{\texttt{#1}}% document class option name
+\newenvironment{docspec}{\begin{quote}\noindent}{\end{quote}}% command specification environment
+
+\begin{document}
+
+\maketitle% this prints the handout title, author, and date
+
+%\printclassoptions
+This are notes on the 11th Chapter, Pracitcal Methodology, from the Deep Learning
+book\cite{goodfellow-et-al-2016}.
+
+The book\cite{goodfellow-et-al-2016} recommends the following procces for designing
+a machine learning system to solve a particular problem:
+\begin{enumerate}
+    \item Choose your performance(error) metric.
+    \item Establish a working end-to-end pipeline as soon as possible.
+    \item Instrument the system to determine bottelnecks in performance and debugging.
+    \item Make incremental changes.
+\end{enumerate}
+
+\section{Performance Metric}\label{sec:perf-metrics}
+First thing to do when developing a machine learning system is to determine which
+error(performance) metric to use and improve.
+
+For practical cases the error metric is lower bounded by the Bayes error. This is
+because the input features might have incomplete information, the processes modeled
+is stochastic, finite amount of data, etc.
+
+Multiple performance metrics can be chosen. When multiple performance metrics are
+used, one can usually trade between them to achieve the desired global performance.
+
+The performance metrics should be specific to the problem that is  solved. Here are
+a few performance metrics to consider when designing a machine learning system:
+
+\begin{itemize}
+    \item accuracy
+    \item precision and recall
+    \item coverage
+    \item precision-recall curve
+    \item $F-score = {2pr}/({p+r})$
+\end{itemize}
+
+\section{Baseline Models}\label{sec:baseline-model}
+The second step is to choose a model for your problem and establish a working
+end-to-end system. If the problem you are working on has been solved or partialy
+solved before, it is a good idea to start from there.
+
+Here are a few design choices that you can make but keep in mind that the field of
+machine learning is advancing quickly and better solution might be available
+(the book was published in 2016):
+\begin{itemize}
+    \item Simple problem - simple model, e.g. logistic regression.
+    \item For supervized learning on fixed size input vectors, use a feed forword
+        network with fully connected layers.
+    \item For input with topological structure, use a convolutional neural network.
+    \item If the input or output is a squence, use a gated recurrent network 
+        (LSTM or GRU).
+\end{itemize}
+
+The most utilized methods for training (optimization) are Stochastic Gradient
+Descent with momentum (SGD) or Adam.
+
+Popular learning rate decay schemes for SGD:
+\begin{itemize}
+    \item Linear decay until fixed minimum.
+    \item Exponential decay.
+    \item Decrease learning rate by a factor of 2-10 each time
+         validation error plateaus.
+\end{itemize}
+
+It is good practice to use some form of regularization in the optimization proccess,
+especialy for small number of examples.
+Some of the most successfuly and widely used methods of regularization are:
+\begin{itemize}
+    \item Batch normalization.
+    \item Early stopping (should be used almost universally\cite{goodfellow-et-al-2016}).
+    \item Dropout is an excellent regularizer.
+\end{itemize}
+
+\section{More Data}\label{sec:more-data}
+Often it is much better to gather more data than to improve the learning
+algorithm.
+
+First thing to check when deciding wether to gather more data or not, is, the performance
+on the training set. If the performance on the training set is bad it is very
+probable that the model is not be using the training data that is already available.
+In this case, instead of gathering more data it is recomended to:
+\begin{itemize}
+    \item Increase the model size(e.g: number of neurons per layer, number of layers,
+        etc.)
+    \item Tune the learning rate.
+    \item Check the data quality.
+\end{itemize}
+
+When the performance on the training set is acceptable, check the performance on
+a test set. If the performance on the test set is good the there is nothing left 
+to do, otherwise it is almost always a good idea to gather more data.
+
+When deciding to gather more data you should always keep in mind the cost of 
+gathering more data.
+
+In order to decide how much more data to gather check to see how the performance of
+the system scales with the size of the training data. For this purpose one can
+plot curves of the performance depending on the training data size. Logarithmic 
+steps in data size are recomended.
+
+Sometimes the cost of gathering more data is too high. In this cases, the
+alternatives to gathering data are: reduce the size of the model, improve
+regularization (e.g: add drop out, adjust hpyperparameters such as weight decay
+coefficents).
+
+\section{Hyperparameters}\label{sec:hyperparameters}
+Almost, if not, all models come with hyperparameters to be tuned in order to achieve
+the best performance for a specific problem. The hpyerparameters can affect from the
+time and memory cost of the running algorithm to the quality of the model.
+
+Selection of the hyper parameters can be done manually or automatically.
+
+The primary goal of hyperparameter search is to adjust the effective capacity of the
+model. Effective capacity of the model depends on three factors:
+\begin{itemize}
+    \item Representation capacity of the model (more hidden layers / more units per
+        hidden layer = greater representational capacity).
+    \item Optimization algortihm to successfully minimize the cost function.
+    \item Degree to which the cost function and training procedure regularizes the
+        model.
+\end{itemize}
+
+The generalization error ploted as a founction of one of the hyperparameters
+follows a U-shaped curve.
+
+At one end of the U-shaped curve there is the underfitting regime when the
+generalization error is high because the training error is high and the
+hyperparameter corresponds to low capacity. At the other end the hyperparameter
+corresponds to high capacity and the generalization error is high because the
+gap between the training error and test error is high. Somewhere in the middle lies
+the optimal model capacity, which achieves the lowest possible generalization error,
+by adding a medium generalization gap to a medium amount of training error.
+
+\subsection{Manual hyperparameters tunning}
+When choosing to mannually tune the hyperparameters, one must have a good
+understanding of the relation between the hyperparameters, training error,
+generalization error and computational resources.
+
+One of the most important hyperparameters to tune, especially when manual tunning
+is chosen, is the learning rate.
+
+\subsection{Automatic hyperparameters tunning}
+When tunning parameters automatically one has to choose the way to explore the
+U-shaped curve by choosign the appropiate hyperparameters ranges.
+
+The direct approach is to choose the hyperparameters on a grid. This method is
+ussualy slow and the results are limited.
+
+A better aproach is to choose hyperparameters randomly. This way achieves better
+search space coverage.
+
+\subsection{Model-based hyperparameter optimization}
+The search for good hyperparameters can be cast as and optimization problem.
+Current approaches to include Spearmint\cite{snoek-et-al-2016}, TPE
+\cite{bergstar-et-al-2011} and SMAC\cite{hutter-et-al-2011}.
+
+\section{Debugging}\label{sec:debugging}
+Debuging machine learning systems can be difficult because a code problem can be
+hidden by the learning algorithm that manages to optimze despite the coding error.
+
+Methods to debug software problems:
+\begin{itemize}
+    \item Visualize the model in action.
+    \item Visualize the worst mistake.
+    \item Reason about software using train and test error.
+    \item Fit a small dataset.
+    \item Compare back-propagation derivatives to numerical derivatives.
+    \item Monitor historgrams of activations and gradient.
+\end{itemize}
+
+\bibliography{practical_methodology}
+\bibliographystyle{plainnat}
+
+\end{document}
